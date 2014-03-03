@@ -2,57 +2,51 @@
 // By Ycaro Afonso - http://ycaro.net/tag/dotnetxmlhttpRequest/
 
 using System;
-using System.Collections.Generic;
-
 using System.Net;
 using System.IO;
+using System.Text;
 
 namespace DotNetXmlHttpRequest
 {
-    public partial class XMLHttpRequest : System.IDisposable
+    public partial class XMLHttpRequest : IXMLHttpRequest
     {
 
         #region "variables"
 
-        private string pSend = string.Empty;
+        private Uri _pUri;
+        private EnumMethod _pMethod;
 
-        public Uri pUri;
-        private EnumMethod pMethod;
+        private HttpWebRequest _request;
+        private HttpWebResponse _response;
 
-        public HttpWebRequest Request;
-        public HttpWebResponse Response = null;
+        private int _pTimeOut = 20000;
 
-        private int pTimeOut = 20000;
-
-        private string pResponseText = string.Empty;
+        private string _pResponseText = string.Empty;
 
         #endregion
 
-
         public int TimeOut
         {
-            get { return pTimeOut; }
-            set { pTimeOut = value; }
+            get { return _pTimeOut; }
+            set { _pTimeOut = value; }
         }
-
-        public XMLHttpRequest() { }
 
         public enum States
         {
-            UNSENT = 0,
-            OPENED = 1,
-            HEADERS_RECEIVED = 2,
-            LOADING = 3,
-            DONE = 4
+            Unsent = 0,
+            Opened = 1,
+            HeadersReceived = 2,
+            Loading = 3,
+            Done = 4
         }
 
         public enum EnumMethod
         {
-            POST,
-            GET
+            Post,
+            Get
         }
 
-        public States readystate
+        public States Readystate
         {
             get;
             private set;
@@ -60,87 +54,69 @@ namespace DotNetXmlHttpRequest
 
         #region "Open"
 
-        /// <summary>
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-open-method
-        /// </summary>
-        /// <param name="method"></param>
-        /// <param name="url"></param>
-        /// <remarks></remarks>
+
         public void Open(EnumMethod method, string url)
         {
-            readystate = States.UNSENT;
-            pMethod = method;
-            pUri = new Uri(url);
-            Request = (HttpWebRequest)WebRequest.Create(pUri);
-            Request.Timeout = TimeOut;
+            Readystate = States.Unsent;
+            _pMethod = method;
+            _pUri = new Uri(url);
+            _request = (HttpWebRequest)WebRequest.Create(_pUri);
+            _request.Timeout = TimeOut;
         }
 
-        public void Open(EnumMethod _Method, string _Url, string Username, string Password)
+        public void Open(EnumMethod method, string url, string username, string password)
         {
-            Open(_Method, _Url);
-            Request.Credentials = new NetworkCredential(Username, Password);
+            Open(method, url);
+            _request.Credentials = new NetworkCredential(username, password);
         }
 
         #endregion
 
-        /// <summary>
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-setRequestheader-method
-        /// </summary>
-        /// <param name="header"></param>
-        /// <remarks></remarks>
-        public void setRequestHeader(string header, string value)
+        public void SetRequestHeader(string header, string value)
         {
-            if (Request.Headers[header] == null)
+            if (_request.Headers[header] == null)
             {
-                Request.Headers.Add(header, value);
+                _request.Headers.Add(header, value);
             }
             else
             {
-                Request.Headers[header] = value;
+                _request.Headers[header] = value;
             }
         }
 
 
         #region "Send"
 
-        /// <summary>
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-send-method
-        /// </summary>
-        /// <param name="Data"></param>
-        /// <remarks></remarks>
-        public void Send(string Data)
+        public void Send(string data)
         {
-            pSend = Data;
-            pResponseText = string.Empty;
+            _pResponseText = string.Empty;
             try
             {
-                if (pMethod == EnumMethod.POST)
+                if (_pMethod == EnumMethod.Post)
                 {
-                    Request.Method = "POST";
+                    _request.Method = "POST";
 
-                    byte[] _data = System.Text.Encoding.Default.GetBytes(pSend);
-                    Request.ContentType = "application/x-www-form-urlencoded";
-                    Request.ContentLength = Data.Length;
-                    using (Stream newStream = Request.GetRequestStream())
+                    byte[] dataArray = System.Text.Encoding.Default.GetBytes(data);
+                    _request.ContentType = "application/x-www-form-urlencoded";
+                    _request.ContentLength = data.Length;
+                    using (Stream newStream = _request.GetRequestStream())
                     {
-                        newStream.Write(_data, 0, _data.Length);
+                        newStream.Write(dataArray, 0, dataArray.Length);
                         newStream.Close();
                     }
                 }
 
-                Response = (HttpWebResponse)Request.GetResponse();
+                _response = (HttpWebResponse)_request.GetResponse();
 
 
-                readystate = States.DONE;
-
-
+                Readystate = States.Done;
             }
             catch (WebException ex)
             {
-                Response = (HttpWebResponse)ex.Response;
-                readystate = States.DONE;
+                _response = (HttpWebResponse)ex.Response;
+                Readystate = States.Done;
 
-                if (Response == null)
+                if (_response == null)
                 {
                     throw new Exception("Ocorreu um erro no Request que não é um HTTP ERROR");
                     // TODO: 
@@ -155,162 +131,95 @@ namespace DotNetXmlHttpRequest
 
         #endregion
 
-        /// <summary>
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-abort-method
-        /// </summary>
-        /// <remarks></remarks>
         public void Abort()
         {
-            Request.Abort();
+            _request.Abort();
         }
 
         #region "Response"
 
         #region "Status"
 
-        /// <summary>
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-status-attribute
-        /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public int Status
         {
-            get { return (int)Response.StatusCode; }
+            get { return (int)_response.StatusCode; }
         }
 
-        /// <summary>
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-statustext-attribute
-        /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string StatusText
         {
-            get { return Response.StatusDescription; }
+            get { return _response.StatusDescription; }
         }
 
         #endregion
 
         #region "Header"
 
-        /// <summary>
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-getresponseheader-method
-        /// </summary>
-        /// <param name="header"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public string getResponseHeader(string header)
+        public string GetResponseHeader(string header)
         {
-            return string.Concat(header, ": ", Response.Headers[header]);
+            return string.Concat(header, ": ", _response.Headers[header]);
         }
-        public string getResponseHeader(int header)
+        public string GetResponseHeader(int header)
         {
-            return string.Concat(Response.Headers.Keys[header], ": ", Response.Headers[header]);
+            return string.Concat(_response.Headers.Keys[header], ": ", _response.Headers[header]);
         }
 
 
-        /// <summary>
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-getallresponseheaders-method
-        /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public string getAllResponseHeaders()
+        public string GetAllResponseHeaders()
         {
-            System.Text.StringBuilder retorna = new System.Text.StringBuilder();
-            for (int x = 0; x <= Response.Headers.Count - 1; x++)
+            StringBuilder retorna = new StringBuilder();
+            for (int x = 0; x <= _response.Headers.Count - 1; x++)
             {
-                retorna.AppendFormat("{0}: {1}; ", Response.Headers.Keys[x], Response.Headers[x]);
+                retorna.AppendFormat("{0}: {1}; ", _response.Headers.Keys[x], _response.Headers[x]);
             }
             return retorna.ToString();
         }
 
         #endregion
 
-        /// <summary>
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-responsetext-attribute
-        /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public String responseText
+
+        public string ResponseText()
+        {
+            if (_pResponseText == string.Empty)
+            {
+                StreamReader responseReader = null;
+                try
+                {
+                    if (_response.GetResponseStream() != null)
+                    {
+                        responseReader = new StreamReader(_response.GetResponseStream());
+                        _pResponseText = responseReader.ReadToEnd();
+                    }
+                    else
+                        _pResponseText = string.Empty;
+                }
+                finally
+                {
+                    if (responseReader != null) responseReader.Close();
+                }
+            }
+            return _pResponseText;
+        }
+
+        public object ResponseXML
         {
             get
             {
-                if (pResponseText == string.Empty)
-                    if (Response.ContentType.ToString().Split('/')[0].Split('/')[0] == "text")
-                    {
-                        System.IO.StreamReader responseReader = null;
-                        try
-                        {
-                            if (Response.GetResponseStream() != null)
-                            {
-                                responseReader = new System.IO.StreamReader(Response.GetResponseStream());
-                                pResponseText = responseReader.ReadToEnd();
-                            }
-                            else
-                            {
-                                pResponseText = string.Empty;
-                            }
-                            // Catch ex As Exception
-                        }
-                        finally
-                        {
-                            if (responseText != string.Empty)
-                                responseReader.Close();
-                        }
-                    }
-                return pResponseText;
+                throw new NotImplementedException();
             }
-        }
-
-        /// <summary>
-        /// TODO: 
-        /// http://www.w3.org/TR/XMLHttpRequest/#the-responsexml-attribute
-        /// </summary>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        public object responseXML()
-        {
-            throw new Exception();
         }
 
         #endregion
 
-        #region "IDisposable"
 
-        // To detect redundant calls
-        private bool disposedValue = false;
-
-        // IDisposable
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!this.disposedValue)
-            {
-                if (disposing)
-                {
-                    Response.GetResponseStream().Close();
-                    Response.GetResponseStream().Dispose();
-                    Response.Close();
-                }
-
-                // TODO: free your own state (unmanaged objects).
-                // TODO: set large fields to null.
-            }
-            this.disposedValue = true;
-        }
-
-        #region " IDisposable Support "
-        // This code added by Visual Basic to correctly implement the disposable pattern.
         public void Dispose()
         {
-            // Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            var responseStream = _response.GetResponseStream();
+            if (responseStream != null) responseStream.Close();
+
+            var stream = _response.GetResponseStream();
+            if (stream != null) stream.Dispose();
+
+            _response.Close();
         }
-        #endregion
-
-        #endregion
-
     }
 }
