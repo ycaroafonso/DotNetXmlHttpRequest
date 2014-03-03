@@ -35,6 +35,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IXMLHttpRequest.cs" />
     <Compile Include="XMLHttpRequest.plus.cs" />
     <Compile Include="XMLHttpRequest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

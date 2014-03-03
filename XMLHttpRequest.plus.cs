@@ -1,35 +1,66 @@
-﻿
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace DotNetXmlHttpRequest
 {
     public partial class XMLHttpRequest
     {
+        public enum Header
+        {
+            ContentType,
+            Cookie,
+            Host,
+            Referer,
+            UserAgent
+        }
 
-
-        public void setRequestHeader(DotNetXmlHttpRequest.plus.Enums.Header header, string value)
+        public void SetRequestHeader(Header header, string value)
         {
             switch (header)
             {
-                case DotNetXmlHttpRequest.plus.Enums.Header.ContentType:
-                    Request.ContentType = value;
+                case Header.ContentType:
+                    _request.ContentType = value;
                     break;
-                case DotNetXmlHttpRequest.plus.Enums.Header.Cookie:
-                    Request.Headers.Add("Cookie", value);
+                case Header.Cookie:
+                    _request.Headers.Add("Cookie", value);
                     break;
-                case DotNetXmlHttpRequest.plus.Enums.Header.Host:
-                    Request.Host = value;
+                case Header.Host:
+                    _request.Host = value;
                     break;
-                case DotNetXmlHttpRequest.plus.Enums.Header.Referer:
-                    Request.Referer = value;
+                case Header.Referer:
+                    _request.Referer = value;
                     break;
-                case DotNetXmlHttpRequest.plus.Enums.Header.UserAgent:
-                    Request.UserAgent = value;
+                case Header.UserAgent:
+                    _request.UserAgent = value;
                     break;
             }
         }
 
+
+        public String ResponseText(Encoding enconding)
+        {
+            if (_pResponseText == string.Empty)
+            {
+                StreamReader responseReader = null;
+                try
+                {
+                    if (_response.GetResponseStream() != null)
+                    {
+                        responseReader = new StreamReader(_response.GetResponseStream(), enconding);
+                        _pResponseText = responseReader.ReadToEnd();
+                    }
+                    else
+                        _pResponseText = string.Empty;
+                }
+                finally
+                {
+                    if (responseReader != null) responseReader.Close();
+                }
+            }
+            return _pResponseText;
+        }
 
 
 
@@ -42,7 +73,7 @@ namespace DotNetXmlHttpRequest
             {
                 str = string.Concat(str, item.Key, "=", item.Value, "&");
             }
-            Send(str.ToString().Trim('&'));
+            Send(str.Trim('&'));
         }
 
         #endregion
@@ -53,41 +84,24 @@ namespace DotNetXmlHttpRequest
 
         public string ResponseContentType
         {
-            get { return Response.ContentType; }
+            get { return _response.ContentType; }
         }
 
         public string Url
         {
-            get { return pUri.AbsolutePath; }
+            get { return _pUri.AbsolutePath; }
         }
 
         public string Domain
         {
-            get { return pUri.Host; }
+            get { return _pUri.Host; }
         }
 
-        public Stream responseStream
+        public Stream ResponseStream
         {
-            get { return Response.GetResponseStream(); }
+            get { return _response.GetResponseStream(); }
         }
 
         #endregion
-    }
-}
-
-
-namespace DotNetXmlHttpRequest.plus
-{
-    public class Enums
-    {
-        public enum Header
-        {
-            Cookie,
-            Referer,
-            ContentType,
-            Host,
-            UserAgent
-        }
-
     }
 }
