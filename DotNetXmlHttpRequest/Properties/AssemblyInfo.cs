@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("DotNetXmlHttpRequest")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyCompany("SEFAZ-MS")]
 [assembly: AssemblyProduct("DotNetXmlHttpRequest")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2012")]
+[assembly: AssemblyCopyright("Copyright © SEFAZ-MS 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("15d1550f-beb9-42a4-9324-2833705e5160")]
+[assembly: Guid("fcc5f7b4-1bd5-4d0d-930a-14780a29a3ac")]
 
 // Version information for an assembly consists of the following four values:
 //
